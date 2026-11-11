@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>L'Académie de Soustraction Magique</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Quicksand', sans-serif;
+            background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4c1d95 100%);
+            min-height: 100vh;
+            min-height: -webkit-fill-available;
+            color: #f8fafc;
+            /* Safe area padding for iPhone Dynamic Island and home bar */
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: env(safe-area-inset-bottom);
+            padding-left: env(safe-area-inset-left);
+            padding-right: env(safe-area-inset-right);
+        }
+        .font-magic {
+            font-family: 'Fredoka One', cursive;
+        }
+        .magic-card {
+            background: rgba(30, 27, 75, 0.75);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 2px solid rgba(167, 139, 250, 0.3);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+        .glow-button {
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 0 15px rgba(167, 139, 250, 0.4);
+            touch-action: manipulation;
+        }
+        .glow-button:active {
+            transform: scale(0.96);
+        }
+        .sparkle-bg {
+            background-image: radial-gradient(rgba(255, 255, 255, 0.15) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-6px) rotate(2deg); }
+        }
+        .floating {
+            animation: float 4s ease-in-out infinite;
+        }
+        @keyframes pulse-glow {
+            0%, 100% { filter: drop-shadow(0 0 8px rgba(234, 179, 8, 0.6)); }
+            50% { filter: drop-shadow(0 0 18px rgba(234, 179, 8, 0.9)); }
+        }
+        .magic-owl {
+            animation: pulse-glow 3s infinite ease-in-out, float 5s infinite ease-in-out;
+        }
+        .touch-btn {
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+    </style>
+</head>
+<body class="sparkle-bg flex flex-col justify-between p-3 select-none">
+
+    <!-- Header Navigation & Scores -->
+    <header class="max-w-md w-full mx-auto flex justify-between items-center magic-card rounded-2xl p-3 mb-2">
+        <div class="flex items-center gap-2">
+            <span class="text-2xl floating">🦉</span>
+            <div>
+                <h1 class="text-sm font-magic text-amber-300 tracking-wide">Archibald le Hibou</h1>
+                <p class="text-[10px] text-purple-200">Soustraction CE2</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            <div class="bg-indigo-950/80 px-3 py-1 rounded-xl border border-amber-400/40 flex items-center gap-1.5">
+                <span class="text-base">⭐</span>
+                <span id="score-display" class="font-magic text-lg text-amber-300">0</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="max-w-md w-full mx-auto flex-1 flex flex-col justify-center">
+
+        <!-- SCREEN: MENU -->
+        <div id="screen-menu" class="magic-card rounded-3xl p-5 text-center flex flex-col items-center my-auto">
+            <div class="magic-owl text-6xl mb-3">🧙‍♂️🦉</div>
+            <h2 class="text-2xl font-magic text-amber-300 mb-2">Académie Sorcière</h2>
+            <p class="text-purple-200 text-xs mb-6 max-w-xs">
+                Entraîne-toi aux soustractions magiques et gagne tes étoiles de mage !
+            </p>
+
+            <div class="grid grid-cols-1 gap-3 w-full max-w-xs">
+                <button onclick="startGame('practice')" class="touch-btn glow-button bg-gradient-to-r from-purple-600 to-indigo-600 active:from-purple-500 text-white font-magic text-lg py-3.5 px-5 rounded-2xl border border-purple-300/40 flex flex-col items-center">
+                    <span>✨ Mode Entraînement</span>
+                    <span class="text-[10px] font-sans text-purple-200 font-normal">À ton rythme avec explications</span>
+                </button>
+                <button onclick="startGame('challenge')" class="touch-btn glow-button bg-gradient-to-r from-amber-500 to-orange-600 active:from-amber-400 text-slate-900 font-magic text-lg py-3.5 px-5 rounded-2xl border border-amber-300/40 flex flex-col items-center">
+                    <span>⚡ Défi Chrono (3 min)</span>
+                    <span class="text-[10px] font-sans text-slate-900/80 font-normal">Chrono comme dans le cahier !</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- SCREEN: GAMEPLAY -->
+        <div id="screen-game" class="hidden flex-col gap-2 my-auto">
+            <!-- Game Bar Info -->
+            <div class="magic-card rounded-2xl p-2.5 flex justify-between items-center text-xs">
+                <div class="flex items-center gap-2">
+                    <span id="mode-badge" class="bg-purple-800 text-purple-200 px-2.5 py-0.5 rounded-full font-bold text-[10px] uppercase">Mode</span>
+                    <span id="question-count" class="text-purple-200 font-semibold">Question 1/15</span>
+                </div>
+                <div id="timer-container" class="hidden flex items-center gap-1.5 bg-amber-500/20 px-2.5 py-0.5 rounded-full border border-amber-400/30">
+                    <span class="text-sm">⏳</span>
+                    <span id="timer-display" class="font-magic text-amber-300 text-sm">03:00</span>
+                </div>
+            </div>
+
+            <!-- Main Question Box -->
+            <div class="magic-card rounded-3xl p-4 text-center flex flex-col items-center relative overflow-hidden">
+                <!-- Mascot message -->
+                <div class="flex items-center gap-2 bg-indigo-900/60 py-2 px-3 rounded-xl border border-indigo-400/30 mb-3 w-full">
+                    <span class="text-2xl floating shrink-0">🦉</span>
+                    <p id="owl-speech" class="text-xs text-left text-purple-100 leading-tight">
+                        Passe par la dizaine inférieure pour t'aider !
+                    </p>
+                </div>
+
+                <!-- Equation Display -->
+                <div class="flex items-center justify-center gap-3 my-2">
+                    <span id="calc-a" class="font-magic text-5xl text-amber-300">52</span>
+                    <span class="font-magic text-4xl text-purple-300">-</span>
+                    <span id="calc-b" class="font-magic text-5xl text-pink-400">7</span>
+                    <span class="font-magic text-4xl text-purple-300">=</span>
+                    <div class="w-24 h-14 bg-indigo-950/90 border-3 border-amber-400/60 rounded-2xl flex items-center justify-center shadow-inner">
+                        <span id="user-input-display" class="font-magic text-4xl text-amber-300">?</span>
+                    </div>
+                </div>
+
+                <!-- Number Pad optimized for mobile touch -->
+                <div class="grid grid-cols-5 gap-2 w-full max-w-xs mt-2">
+                    <button onclick="appendNum(1)" class="touch-btn bg-indigo-900/90 active:bg-indigo-700 text-white font-magic text-2xl py-3 rounded-xl border border-indigo-500/40">1</button>
+                    <button onclick="appendNum(2)" class="touch-btn bg-indigo-900/90 active:bg-indigo-700 text-white font-magic text-2xl py-3 rounded-xl border border-indigo-500/40">2</button>
+                    <button onclick="appendNum(3)" class="touch-btn bg-indigo-900/90 active:bg-indigo-700 text-white font-magic text-2xl py-3 rounded-xl border border-indigo-500/40">3</button>
+                    <button onclick="appendNum(4)" class="touch-btn bg-indigo-900/90 active:bg-indigo-700 text-white font-magic text-2xl py-3 rounded-xl border border-indigo-500/40">4</button>
+                    <button onclick="appendNum(5)" class="touch-btn bg-indigo-900/90 active:bg-indigo-700 text-white font-magic text-2xl py-3 rounded-xl border border-indigo-500/40">5</button>
+                    <button onclick="appendNum(6)" class="touch-btn bg-indigo-900/90 active:bg-indigo-700 text-white font-magic text-2xl py-3 rounded-xl border border-indigo-500/40">6</button>
+                    <button onclick="appendNum(7)" class="touch-btn bg-indigo-900/90 active:bg-indigo-700 text-white font-magic text-2xl py-3 rounded-xl border border-indigo-500/40">7</button>
+                    <button onclick="appendNum(8)" class="touch-btn bg-indigo-900/90 active:bg-indigo-700 text-white font-magic text-2xl py-3 rounded-xl border border-indigo-500/40">8</button>
+                    <button onclick="appendNum(9)" class="touch-btn bg-indigo-900/90 active:bg-indigo-700 text-white font-magic text-2xl py-3 rounded-xl border border-indigo-500/40">9</button>
+                    <button onclick="appendNum(0)" class="touch-btn bg-indigo-900/90 active:bg-indigo-700 text-white font-magic text-2xl py-3 rounded-xl border border-indigo-500/40">0</button>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex gap-2 w-full max-w-xs mt-2.5">
+                    <button onclick="clearInput()" class="touch-btn w-1/3 bg-rose-950/80 active:bg-rose-900 text-rose-200 font-magic text-base py-3 rounded-xl border border-rose-500/40">Effacer</button>
+                    <button onclick="submitAnswer()" class="touch-btn w-2/3 glow-button bg-gradient-to-r from-emerald-500 to-teal-600 active:from-emerald-400 text-white font-magic text-lg py-3 rounded-xl border border-emerald-300/40">Valider ✨</button>
+                </div>
+
+                <!-- Collapsible Method Visualizer (Hidden by default to save space on mobile) -->
+                <div id="visual-help-box" class="mt-3 w-full max-w-xs bg-indigo-950/80 p-2.5 rounded-xl border border-purple-500/30 text-left text-xs">
+                    <div class="flex justify-between items-center">
+                        <span class="font-bold text-amber-300 text-[11px] flex items-center gap-1">📜 Astuce d'Archibald</span>
+                        <button onclick="toggleVisualHelp()" id="toggle-help-btn" class="touch-btn text-purple-300 hover:text-white underline text-[11px] px-2 py-0.5 bg-indigo-900/80 rounded-lg border border-purple-400/20">
+                            Afficher l'aide
+                        </button>
+                    </div>
+                    <div id="visual-help-content" class="space-y-1.5 mt-2 hidden">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SCREEN: RESULTS -->
+        <div id="screen-results" class="hidden magic-card rounded-3xl p-6 text-center flex flex-col items-center my-auto">
+            <div id="result-icon" class="text-7xl mb-3 floating">🏆</div>
+            <h2 id="result-title" class="text-2xl font-magic text-amber-300 mb-1">Félicitations !</h2>
+            <p id="result-subtitle" class="text-purple-200 text-xs mb-5">Tu as terminé ton entraînement magique !</p>
+
+            <div class="bg-indigo-950/80 rounded-2xl p-4 border border-purple-400/30 w-full max-w-xs mb-6 text-xs">
+                <div class="flex justify-between items-center py-1.5 border-b border-indigo-800">
+                    <span class="text-purple-200">Bonnes réponses :</span>
+                    <span id="res-correct" class="font-magic text-xl text-emerald-400">12 / 15</span>
+                </div>
+                <div class="flex justify-between items-center py-1.5 border-b border-indigo-800">
+                    <span class="text-purple-200">Étoiles gagnées :</span>
+                    <span id="res-stars" class="font-magic text-xl text-amber-300">⭐⭐⭐</span>
+                </div>
+                <div id="res-time-row" class="flex justify-between items-center py-1.5">
+                    <span class="text-purple-200">Temps utilisé :</span>
+                    <span id="res-time" class="font-magic text-lg text-purple-300">02:15</span>
+                </div>
+            </div>
+
+            <div class="flex gap-3 w-full max-w-xs">
+                <button onclick="showScreen('menu')" class="touch-btn w-1/2 bg-indigo-900/80 active:bg-indigo-800 text-purple-200 font-magic text-base py-3 rounded-2xl border border-indigo-500/40">Menu</button>
+                <button onclick="startGame(currentMode)" class="touch-btn w-1/2 glow-button bg-gradient-to-r from-amber-500 to-orange-600 active:from-amber-400 text-slate-900 font-magic text-base py-3 rounded-2xl border border-amber-300/40">Rejouer 🔄</button>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Custom Modal for Feedback/Explanation -->
+    <div id="modal-feedback" class="fixed inset-0 bg-slate-950/85 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+        <div class="magic-card max-w-xs w-full rounded-3xl p-5 text-center border-2 border-amber-400/50 shadow-2xl flex flex-col items-center">
+            <span id="modal-icon" class="text-5xl mb-2">✨</span>
+            <h3 id="modal-title" class="font-magic text-2xl text-amber-300 mb-1">Excellente Magie !</h3>
+            <p id="modal-body" class="text-purple-100 text-xs mb-4">Tu as trouvé la bonne réponse.</p>
+
+            <div id="modal-explanation" class="w-full bg-indigo-950/90 rounded-2xl p-3 border border-indigo-400/30 text-left text-xs text-purple-200 mb-4 hidden">
+                <p class="font-bold text-amber-300 mb-1 flex items-center gap-1">🦉 Astuce d'Archibald :</p>
+                <div id="explanation-steps" class="space-y-1 text-[11px]"></div>
+            </div>
+
+            <button onclick="closeModal()" class="touch-btn glow-button bg-gradient-to-r from-purple-600 to-indigo-600 active:from-purple-500 text-white font-magic text-lg py-3 px-6 rounded-xl w-full">
+                Continuer 🪄
+            </button>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="text-center text-[10px] text-purple-300/50 py-1">
+        Programme CE2 • Soustractions < 9
+    </footer>
+
+    <script>
+        // Game State Variables
+        let currentMode = 'practice';
+        let currentQuestion = 0;
+        let totalQuestions = 15;
+        let score = 0;
+        let correctCount = 0;
+        let currentA = 0;
+        let currentB = 0;
+        let currentAnswer = 0;
+        let userInput = "";
+        let timerInterval = null;
+        let timeLeft = 180;
+        let isHelpVisible = false; // Hidden by default for iPhone layout optimization
+
+        // Sound Effects (Web Audio API)
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playMagicSound(type) {
+            try {
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                if (type === 'correct') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(523.25, audioCtx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.3);
+                    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.3);
+                } else if (type === 'wrong') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(220, audioCtx.currentTime);
+                    osc.frequency.setValueAtTime(180, audioCtx.currentTime + 0.15);
+                    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.3);
+                }
+            } catch (e) {
+                // Audio fallback if restricted by browser policy
+            }
+        }
+
+        // Screen Management
+        function showScreen(screenId) {
+            document.getElementById('screen-menu').classList.add('hidden');
+            document.getElementById('screen-game').classList.add('hidden');
+            document.getElementById('screen-results').classList.add('hidden');
+
+            document.getElementById(`screen-${screenId}`).classList.remove('hidden');
+            if (screenId === 'game') {
+                document.getElementById('screen-game').classList.add('flex');
+            }
+        }
+
+        // Appending numbers
+        function appendNum(num) {
+            if (userInput.length < 3) {
+                userInput += num.toString();
+                updateInputDisplay();
+            }
+        }
+
+        function clearInput() {
+            userInput = "";
+            updateInputDisplay();
+        }
+
+        function updateInputDisplay() {
+            const display = document.getElementById('user-input-display');
+            display.textContent = userInput === "" ? "?" : userInput;
+        }
+
+        // Game Initialization
+        function startGame(mode) {
+            currentMode = mode;
+            currentQuestion = 0;
+            score = 0;
+            correctCount = 0;
+            document.getElementById('score-display').textContent = score;
+
+            document.getElementById('mode-badge').textContent = mode === 'practice' ? 'Entraînement' : 'Chrono';
+
+            if (mode === 'challenge') {
+                totalQuestions = 15;
+                timeLeft = 180;
+                document.getElementById('timer-container').classList.remove('hidden');
+                startTimer();
+            } else {
+                totalQuestions = 10;
+                document.getElementById('timer-container').classList.add('hidden');
+                clearInterval(timerInterval);
+            }
+
+            showScreen('game');
+            nextQuestion();
+        }
+
+        // Timer Control
+        function startTimer() {
+            clearInterval(timerInterval);
+            updateTimerDisplay();
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                updateTimerDisplay();
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    endGame();
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const mins = Math.floor(timeLeft / 60);
+            const secs = timeLeft % 60;
+            document.getElementById('timer-display').textContent = 
+                `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        // Question Generator
+        function generateQuestion() {
+            const tens = Math.floor(Math.random() * 8) + 2; // 2 to 9
+            const units = Math.floor(Math.random() * 7); // 0 to 6
+            currentA = tens * 10 + units;
+
+            const minB = Math.max(4, units + 1);
+            currentB = Math.floor(Math.random() * (9 - minB + 1)) + minB;
+
+            if (currentA - currentB < 0) {
+                currentA = 32;
+                currentB = 6;
+            }
+
+            currentAnswer = currentA - currentB;
+        }
+
+        function nextQuestion() {
+            currentQuestion++;
+            if (currentQuestion > totalQuestions) {
+                endGame();
+                return;
+            }
+
+            document.getElementById('question-count').textContent = `Question ${currentQuestion}/${totalQuestions}`;
+            userInput = "";
+            updateInputDisplay();
+            generateQuestion();
+
+            document.getElementById('calc-a').textContent = currentA;
+            document.getElementById('calc-b').textContent = currentB;
+
+            const messages = [
+                "Passe d'abord par la dizaine inférieure !",
+                "Tu es une vraie sorcière des nombres !",
+                "Réfléchis bien... Tu as le pouvoir !",
+                "Concentration magique en cours...",
+                "Retire les unités pour atteindre la dizaine !"
+            ];
+            document.getElementById('owl-speech').textContent = messages[Math.floor(Math.random() * messages.length)];
+
+            // Ensure help box state is preserved/collapsed
+            isHelpVisible = false;
+            document.getElementById('visual-help-content').classList.add('hidden');
+            document.getElementById('toggle-help-btn').textContent = "Afficher l'aide";
+
+            renderVisualHelp();
+        }
+
+        // Render visual help matching worksheet
+        function renderVisualHelp() {
+            const container = document.getElementById('visual-help-content');
+            const targetTen = Math.floor(currentA / 10) * 10;
+            const step1 = currentA - targetTen;
+            const step2 = currentB - step1;
+
+            if (step1 > 0 && step2 > 0) {
+                container.innerHTML = `
+                    <p class="text-purple-200">Pour <strong>${currentA} - ${currentB}</strong> :</p>
+                    <div class="text-amber-200 bg-indigo-900/60 p-1.5 rounded-lg">
+                        1️⃣ Atteindre la dizaine : <strong>${currentA} - ${step1} = ${targetTen}</strong>
+                    </div>
+                    <div class="text-pink-200 bg-indigo-900/60 p-1.5 rounded-lg">
+                        2️⃣ Soustraire le reste (${step2}) : <strong>${targetTen} - ${step2} = ${currentAnswer}</strong>
+                    </div>
+                `;
+            } else {
+                container.innerHTML = `
+                    <p class="text-purple-200">Pour <strong>${currentA} - ${currentB}</strong> :</p>
+                    <p class="text-amber-200 bg-indigo-900/60 p-1.5 rounded-lg">Retire directement les ${currentB} unités !</p>
+                `;
+            }
+        }
+
+        function toggleVisualHelp() {
+            const content = document.getElementById('visual-help-content');
+            const btn = document.getElementById('toggle-help-btn');
+            isHelpVisible = !isHelpVisible;
+            content.classList.toggle('hidden', !isHelpVisible);
+            btn.textContent = isHelpVisible ? "Masquer l'aide" : "Afficher l'aide";
+        }
+
+        // Submit Answer logic
+        function submitAnswer() {
+            if (userInput === "") return;
+
+            const val = parseInt(userInput);
+            const isCorrect = val === currentAnswer;
+
+            if (isCorrect) {
+                playMagicSound('correct');
+                score += 10;
+                correctCount++;
+                document.getElementById('score-display').textContent = score;
+
+                showModal(
+                    '✨ Magique !',
+                    `Bravo ! <strong>${currentA} - ${currentB} = ${currentAnswer}</strong>`,
+                    '🌟',
+                    false
+                );
+            } else {
+                playMagicSound('wrong');
+                showModal(
+                    'Oups ! Presque...',
+                    `La bonne réponse était <strong class="text-amber-300">${currentAnswer}</strong>.`,
+                    '🪄',
+                    true
+                );
+            }
+        }
+
+        // Display Modal with explanation
+        function showModal(title, bodyText, icon, showExplanation) {
+            document.getElementById('modal-title').innerHTML = title;
+            document.getElementById('modal-body').innerHTML = bodyText;
+            document.getElementById('modal-icon').textContent = icon;
+
+            const expBox = document.getElementById('modal-explanation');
+            const expSteps = document.getElementById('explanation-steps');
+
+            if (showExplanation) {
+                const targetTen = Math.floor(currentA / 10) * 10;
+                const step1 = currentA - targetTen;
+                const step2 = currentB - step1;
+
+                if (step1 > 0 && step2 > 0) {
+                    expSteps.innerHTML = `
+                        <div>• Pour <strong>${targetTen}</strong>, enlève <strong>${step1}</strong> : ${currentA} - ${step1} = ${targetTen}</div>
+                        <div>• Enlève le reste (<strong>${step2}</strong>) : ${targetTen} - ${step2} = <strong>${currentAnswer}</strong></div>
+                    `;
+                } else {
+                    expSteps.innerHTML = `<div>• ${currentA} - ${currentB} = <strong>${currentAnswer}</strong></div>`;
+                }
+                expBox.classList.remove('hidden');
+            } else {
+                expBox.classList.add('hidden');
+            }
+
+            document.getElementById('modal-feedback').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('modal-feedback').classList.add('hidden');
+            nextQuestion();
+        }
+
+        // End Game
+        function endGame() {
+            clearInterval(timerInterval);
+            showScreen('results');
+
+            document.getElementById('res-correct').textContent = `${correctCount} / ${totalQuestions}`;
+
+            const ratio = correctCount / totalQuestions;
+            let stars = "⭐";
+            let title = "Apprentie Sorcière !";
+            let subtitle = "Continue de t'entraîner pour devenir une Grande Mage !";
+
+            if (ratio >= 0.8) {
+                stars = "⭐⭐⭐";
+                title = "Grande Mage ! 🧙‍♀️";
+                subtitle = "Incroyable ! Tu maîtrises parfaitement la méthode !";
+            } else if (ratio >= 0.5) {
+                stars = "⭐⭐";
+                title = "Sorcière Émérite ! 🔮";
+                subtitle = "Très bien ! Tu fais de super progrès en calcul mental.";
+            }
+
+            document.getElementById('res-stars').textContent = stars;
+            document.getElementById('result-title').textContent = title;
+            document.getElementById('result-subtitle').textContent = subtitle;
+
+            if (currentMode === 'challenge') {
+                const usedTime = 180 - timeLeft;
+                const mins = Math.floor(usedTime / 60);
+                const secs = usedTime % 60;
+                document.getElementById('res-time').textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+                document.getElementById('res-time-row').classList.remove('hidden');
+            } else {
+                document.getElementById('res-time-row').classList.add('hidden');
+            }
+        }
+    </script>
+</body>
+</html>
